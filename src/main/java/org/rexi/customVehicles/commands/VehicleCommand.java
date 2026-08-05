@@ -17,25 +17,62 @@ public class VehicleCommand implements CommandExecutor {
             String label,
             String[] args
     ) {
-
         if (!(sender instanceof Player player)) {
+            sender.sendMessage(
+                    "Este comando sólo puede usarlo un jugador."
+            );
             return true;
         }
 
-        if (args.length == 2
-                && args[0].equalsIgnoreCase("spawn")
-                && args[1].equalsIgnoreCase("car")) {
+        if (args.length != 2
+                || !args[0].equalsIgnoreCase("spawn")) {
 
-            Car car = new Car(
-                    player.getLocation(),
-                    VehicleType.SEDAN
+            player.sendMessage(
+                    "§eUso: /vehicle spawn "
+                            + "<car|compact|sedan|van>"
             );
 
-            CustomVehicles.getInstance().getVehicleManager()
-                    .addVehicle(car);
-
-            player.sendMessage("§aCoche generado.");
+            return true;
         }
+
+        VehicleType type;
+
+        switch (args[1].toLowerCase()) {
+            case "car", "sedan" ->
+                    type = VehicleType.SEDAN;
+
+            case "compact" ->
+                    type = VehicleType.COMPACT;
+
+            case "van" ->
+                    type = VehicleType.VAN;
+
+            default -> {
+                player.sendMessage(
+                        "§cTipo desconocido. "
+                                + "Usa compact, sedan o van."
+                );
+
+                return true;
+            }
+        }
+
+        Car car = new Car(
+                player.getLocation(),
+                type
+        );
+
+        CustomVehicles.getInstance()
+                .getVehicleManager()
+                .addVehicle(car);
+
+        player.sendMessage(
+                "§aVehículo generado: "
+                        + type.name().toLowerCase()
+                        + " con "
+                        + type.getSeats()
+                        + " plazas."
+        );
 
         return true;
     }

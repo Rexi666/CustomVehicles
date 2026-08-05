@@ -9,7 +9,9 @@ import org.rexi.customVehicles.manager.VehicleManager;
 public final class CustomVehicles extends JavaPlugin {
 
     private static CustomVehicles instance;
+
     private VehicleManager vehicleManager;
+    private VehicleInputListener vehicleInputListener;
 
     @Override
     public void onEnable() {
@@ -18,20 +20,28 @@ public final class CustomVehicles extends JavaPlugin {
         vehicleManager = new VehicleManager();
         vehicleManager.start();
 
-        getCommand("vehicle").setExecutor(new VehicleCommand());
+        if (getCommand("vehicle") != null) {
+            getCommand("vehicle").setExecutor(new VehicleCommand());
+        }
 
         getServer().getPluginManager().registerEvents(
                 new VehicleListener(),
                 this
         );
-        new VehicleInputListener().register();
+
+        vehicleInputListener = new VehicleInputListener();
+        vehicleInputListener.register();
 
         getLogger().info("CustomVehicles enabled!");
     }
 
     @Override
     public void onDisable() {
-        // Plugin shutdown logic
+        if (vehicleManager != null) {
+            vehicleManager.removeAll();
+        }
+
+        getLogger().info("CustomVehicles disabled!");
     }
 
     public static CustomVehicles getInstance() {
