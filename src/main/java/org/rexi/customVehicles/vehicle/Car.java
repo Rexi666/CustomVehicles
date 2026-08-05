@@ -22,7 +22,7 @@ public class Car {
     private static final double MAX_FORWARD_SPEED = 0.5;
     private static final double MAX_BACKWARD_SPEED = -0.2;
 
-    private static final double MIN_TURN_SPEED = 0.05;
+    private static final double MIN_TURN_SPEED = 0.01;
     private static final float TURN_SPEED = 4.0F;
 
     /*
@@ -39,6 +39,7 @@ public class Car {
     private final VehicleType type;
 
     private double speed;
+    private float yaw;
 
     private volatile int steering;
     private volatile boolean forward;
@@ -46,6 +47,7 @@ public class Car {
 
     public Car(Location location, VehicleType type) {
         this.type = type;
+        this.yaw = location.getYaw();
 
         World world = location.getWorld();
 
@@ -155,14 +157,23 @@ public class Car {
             resetInput();
         }
 
+        /*
+         * Aceleración.
+         */
         if (forward && !backward) {
             speed += ACCELERATION;
         } else if (backward && !forward) {
             speed -= ACCELERATION;
         }
 
+        /*
+         * Rozamiento.
+         */
         speed *= FRICTION;
 
+        /*
+         * Límites de velocidad.
+         */
         speed = Math.max(
                 MAX_BACKWARD_SPEED,
                 Math.min(speed, MAX_FORWARD_SPEED)
@@ -172,26 +183,38 @@ public class Car {
             speed = 0;
         }
 
-        Location bodyLocation = body.getLocation();
-
-        float yaw = bodyLocation.getYaw();
-
+        /*
+         * Giramos solamente cuando el coche tiene
+         * una velocidad mínima.
+         *
+         * Usamos nuestro propio yaw, no el yaw del Slime.
+         */
         if (Math.abs(speed) > MIN_TURN_SPEED) {
 
             int effectiveSteering = steering;
 
+            /*
+             * Invertimos el volante al ir marcha atrás.
+             */
             if (speed < 0) {
                 effectiveSteering *= -1;
             }
 
             yaw += effectiveSteering * TURN_SPEED;
+
+            /*
+             * Evita que yaw crezca indefinidamente.
+             */
+            if (yaw > 180.0F) {
+                yaw -= 360.0F;
+            } else if (yaw < -180.0F) {
+                yaw += 360.0F;
+            }
         }
 
-        body.setRotation(yaw, 0);
-
         /*
-         * Calculamos manualmente la dirección horizontal.
-         * Así no dependemos del pitch de la entidad.
+         * Calculamos el movimiento usando el yaw guardado.
+         * La dirección no depende de hacia dónde mire el jugador.
          */
         double radians = Math.toRadians(yaw);
 
@@ -202,22 +225,24 @@ public class Car {
         ).multiply(speed);
 
         /*
-         * Conservamos temporalmente la velocidad vertical para
-         * que la gravedad siga funcionando correctamente.
+         * Conservamos la velocidad vertical porque la gravedad
+         * está activada.
          */
         movement.setY(body.getVelocity().getY());
 
+        /*
+         * Primero aplicamos movimiento.
+         */
         body.setVelocity(movement);
 
-        CustomVehicles.getInstance()
-                .getLogger()
-                .info(
-                        "speed=" + speed
-                                + " requestedVelocity=" + movement
-                                + " actualVelocity=" + body.getVelocity()
-                                + " position=" + body.getLocation().toVector()
-                );
+        /*
+         * La rotación visual se aplica después.
+         */
+        body.setRotation(yaw, 0);
 
+        /*
+         * Los asientos usan exactamente el mismo yaw.
+         */
         updatePassengerSeats(movement, yaw);
     }
 
