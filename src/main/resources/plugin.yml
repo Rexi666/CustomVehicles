@@ -1,0 +1,13 @@
+name: CustomVehicles
+version: '${version}'
+
+main: org.rexi.customVehicles.CustomVehicles
+api-version: '1.21'
+load: POSTWORLD
+
+commands:
+  vehicle:
+    description: Vehicle command
+
+depend:
+  - ProtocolLib
