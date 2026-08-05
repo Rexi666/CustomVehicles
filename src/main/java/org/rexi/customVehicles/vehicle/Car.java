@@ -252,6 +252,19 @@ public class Car {
     ) {
         Location bodyLocation = body.getLocation();
 
+        /*
+         * Predecimos dónde estará el coche en el siguiente tick.
+         */
+        Vector horizontalCarVelocity = new Vector(
+                carVelocity.getX(),
+                0,
+                carVelocity.getZ()
+        );
+
+        Location nextBodyLocation = bodyLocation
+                .clone()
+                .add(horizontalCarVelocity);
+
         for (int i = 0; i < passengerSeats.size(); i++) {
 
             Slime seat = passengerSeats.get(i);
@@ -260,48 +273,78 @@ public class Car {
                 continue;
             }
 
+            /*
+             * Posición local del asiento dentro del coche.
+             */
             Vector localOffset =
                     getPassengerOffset(i);
 
+            /*
+             * Convertimos el offset local en uno orientado
+             * según la dirección actual del coche.
+             */
             Vector rotatedOffset = rotateOffset(
                     localOffset,
                     yaw
             );
 
-            Location targetLocation = bodyLocation
+            /*
+             * Posición exacta donde debe estar el asiento
+             * en el siguiente tick.
+             */
+            Location targetLocation = nextBodyLocation
                     .clone()
                     .add(rotatedOffset);
 
-            Vector correction = targetLocation
-                    .toVector()
-                    .subtract(
-                            seat.getLocation().toVector()
-                    );
+            Location currentLocation =
+                    seat.getLocation();
 
             /*
-             * Sólo corregimos la posición horizontal.
-             * La gravedad controla la altura.
+             * La velocidad necesaria para llegar exactamente
+             * a la posición objetivo en el siguiente tick.
              */
-            correction.setY(0);
-            correction.multiply(0.45);
+            Vector requiredVelocity = targetLocation
+                    .toVector()
+                    .subtract(currentLocation.toVector());
 
-            double maximumCorrection = 1.0;
+            /*
+             * Conservamos la velocidad vertical del Slime
+             * para que la gravedad siga funcionando.
+             */
+            requiredVelocity.setY(
+                    seat.getVelocity().getY()
+            );
 
-            if (correction.lengthSquared()
-                    > maximumCorrection * maximumCorrection) {
+            /*
+             * Protección por si un asiento queda muy lejos,
+             * por ejemplo tras cargar un chunk.
+             */
+            double maximumHorizontalVelocity = 2.0;
 
-                correction.normalize()
-                        .multiply(maximumCorrection);
+            Vector horizontalVelocity = new Vector(
+                    requiredVelocity.getX(),
+                    0,
+                    requiredVelocity.getZ()
+            );
+
+            if (horizontalVelocity.lengthSquared()
+                    > maximumHorizontalVelocity
+                    * maximumHorizontalVelocity) {
+
+                horizontalVelocity.normalize()
+                        .multiply(maximumHorizontalVelocity);
+
+                requiredVelocity.setX(
+                        horizontalVelocity.getX()
+                );
+
+                requiredVelocity.setZ(
+                        horizontalVelocity.getZ()
+                );
             }
 
-            Vector seatVelocity = new Vector(
-                    carVelocity.getX(),
-                    seat.getVelocity().getY(),
-                    carVelocity.getZ()
-            ).add(correction);
-
             seat.setRotation(yaw, 0);
-            seat.setVelocity(seatVelocity);
+            seat.setVelocity(requiredVelocity);
         }
     }
 
@@ -361,7 +404,7 @@ public class Car {
             Vector offset,
             float yaw
     ) {
-        double radians = Math.toRadians(-yaw);
+        double radians = Math.toRadians(yaw);
 
         double cos = Math.cos(radians);
         double sin = Math.sin(radians);
