@@ -17,4 +17,6 @@ vehicles:
   load-planes: true
   load-helicopters: true
 
+hide_seats: true
+
 debug: false
