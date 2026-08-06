@@ -1,136 +1,248 @@
 package org.rexi.customVehicles.vehicle;
 
 import org.bukkit.Location;
+import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.World;
-import org.bukkit.entity.Entity;
+import org.bukkit.entity.Display;
+import org.bukkit.entity.ItemDisplay;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.Slime;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.persistence.PersistentDataType;
+import org.bukkit.util.Transformation;
 import org.bukkit.util.Vector;
+import org.joml.AxisAngle4f;
+import org.joml.Vector3f;
 import org.rexi.customVehicles.CustomVehicles;
+import org.rexi.customVehicles.definition.SeatDefinition;
+import org.rexi.customVehicles.definition.VehicleDefinition;
+import org.rexi.customVehicles.definition.VehiclePhysics;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 
 public class Car {
 
-    private static final double ACCELERATION = 0.01;
-    private static final double FRICTION = 0.98;
-
-    private static final double MAX_FORWARD_SPEED = 0.5;
-    private static final double MAX_BACKWARD_SPEED = -0.2;
-
-    private static final double MIN_TURN_SPEED = 0.01;
-    private static final float TURN_SPEED = 4.0F;
+    /*
+     * Definición cargada desde:
+     *
+     * plugins/CustomVehicles/Cars/<vehiculo>/config.yml
+     */
+    private final VehicleDefinition definition;
 
     /*
-     * El Slime principal también actúa como asiento del conductor.
+     * El Slime principal actúa como:
+     *
+     * - Punto de referencia físico.
+     * - Asiento del conductor.
      */
     private final Slime body;
 
     /*
-     * Cada acompañante tiene su propio Slime.
+     * Representación visual del vehículo.
+     */
+    private final ItemDisplay modelDisplay;
+
+    /*
+     * Slimes utilizados como plazas de acompañante.
      */
     private final List<Slime> passengerSeats =
             new ArrayList<>();
 
-    private final VehicleType type;
+    /*
+     * Sus índices coinciden con passengerSeats.
+     */
+    private final List<SeatDefinition>
+            passengerSeatDefinitions;
 
+    /*
+     * Valores físicos cargados desde config.yml.
+     */
+    private final double maximumForwardSpeed;
+    private final double maximumReverseSpeed;
+
+    private final double acceleration;
+    private final double reverseAcceleration;
+
+    private final double friction;
+    private final float handling;
+    private final double minimumTurnSpeed;
+
+    /*
+     * Estado actual del vehículo.
+     */
     private double speed;
     private float yaw;
 
+    /*
+     * Estado de los controles.
+     *
+     * ProtocolLib puede modificarlos desde el listener
+     * de paquetes.
+     */
     private volatile int steering;
     private volatile boolean forward;
     private volatile boolean backward;
 
-    public Car(Location location, VehicleType type) {
-        this.type = type;
+    public Car(
+            Location location,
+            VehicleDefinition definition
+    ) {
+        this.definition = definition;
         this.yaw = location.getYaw();
+
+        VehiclePhysics physics =
+                definition.physics();
+
+        this.maximumForwardSpeed =
+                physics.maximumForwardSpeed();
+
+        this.maximumReverseSpeed =
+                physics.maximumReverseSpeed();
+
+        this.acceleration =
+                physics.acceleration();
+
+        this.reverseAcceleration =
+                physics.reverseAcceleration();
+
+        this.friction =
+                physics.friction();
+
+        this.handling =
+                physics.handling();
+
+        this.minimumTurnSpeed =
+                physics.minimumTurnSpeed();
+
+        this.passengerSeatDefinitions =
+                List.copyOf(
+                        definition.passengerSeats()
+                );
 
         World world = location.getWorld();
 
         if (world == null) {
             throw new IllegalArgumentException(
-                    "La ubicación no tiene mundo."
+                    "La ubicación del vehículo no tiene mundo."
             );
         }
 
         /*
-         * Slime principal: cuerpo y asiento del conductor.
+         * Slime conductor y cuerpo físico.
          */
         body = createSeatSlime(
                 location,
-                "driver"
+                "driver",
+                definition.driverSeat().id()
         );
 
         /*
-         * Creamos una plaza adicional por cada acompañante.
-         * El número total de plazas incluye al conductor.
+         * Modelo visual.
          */
-        for (int i = 1; i < type.getSeats(); i++) {
-            Slime passengerSeat = createSeatSlime(
-                    location,
-                    "passenger"
-            );
+        modelDisplay =
+                createModelDisplay(location);
 
-            passengerSeats.add(passengerSeat);
+        /*
+         * Creamos exactamente las plazas configuradas
+         * en seats.passengers.
+         */
+        for (SeatDefinition seatDefinition
+                : passengerSeatDefinitions) {
+
+            Slime passengerSeat =
+                    createSeatSlime(
+                            location,
+                            "passenger",
+                            seatDefinition.id()
+                    );
+
+            passengerSeats.add(
+                    passengerSeat
+            );
         }
 
         placePassengerSeatsInitially();
+        updateModelDisplay();
     }
 
     private Slime createSeatSlime(
             Location location,
-            String role
+            String role,
+            String seatId
     ) {
-        Slime slime = location.getWorld().spawn(
+        World world = location.getWorld();
+
+        if (world == null) {
+            throw new IllegalArgumentException(
+                    "No se puede crear un asiento sin mundo."
+            );
+        }
+
+        Slime slime = world.spawn(
                 location,
                 Slime.class
         );
 
+        /*
+         * El modelo visual ya funciona, por lo que los
+         * Slimes se mantienen invisibles.
+         *
+         * Si necesitas depurarlos, cambia temporalmente
+         * este valor a false.
+         */
+        slime.setInvisible(true);
+
         slime.setSize(1);
-        slime.setInvisible(false);
 
         /*
-         * IMPORTANTE:
-         * La IA debe estar activa para que el Slime procese
-         * correctamente la velocidad.
+         * La IA activa permite procesar correctamente
+         * las velocidades aplicadas al Slime.
          */
         slime.setAI(true);
 
         /*
          * Impide que salte o deambule por sí mismo.
-         * Papel 1.21.x.
          */
         slime.setWander(false);
 
         /*
-         * Dejamos gravedad activa para que permanezca
-         * apoyado sobre el suelo.
+         * Mantiene el asiento sobre el terreno.
          */
         slime.setGravity(true);
 
         slime.setInvulnerable(true);
         slime.setSilent(true);
         slime.setPersistent(true);
-
-        /*
-         * Evita que los distintos asientos se empujen
-         * entre sí o bloqueen el movimiento.
-         */
         slime.setCollidable(false);
 
-        NamespacedKey seatKey = new NamespacedKey(
-                CustomVehicles.getInstance(),
-                "vehicle_seat"
-        );
+        NamespacedKey seatKey =
+                new NamespacedKey(
+                        CustomVehicles.getInstance(),
+                        "vehicle_seat"
+                );
 
-        NamespacedKey roleKey = new NamespacedKey(
-                CustomVehicles.getInstance(),
-                "seat_role"
-        );
+        NamespacedKey roleKey =
+                new NamespacedKey(
+                        CustomVehicles.getInstance(),
+                        "seat_role"
+                );
+
+        NamespacedKey idKey =
+                new NamespacedKey(
+                        CustomVehicles.getInstance(),
+                        "seat_id"
+                );
+
+        NamespacedKey vehicleIdKey =
+                new NamespacedKey(
+                        CustomVehicles.getInstance(),
+                        "vehicle_id"
+                );
 
         slime.getPersistentDataContainer().set(
                 seatKey,
@@ -144,39 +256,304 @@ public class Car {
                 role
         );
 
+        slime.getPersistentDataContainer().set(
+                idKey,
+                PersistentDataType.STRING,
+                seatId
+        );
+
+        slime.getPersistentDataContainer().set(
+                vehicleIdKey,
+                PersistentDataType.STRING,
+                definition.id()
+        );
+
         return slime;
+    }
+
+    private ItemDisplay createModelDisplay(
+            Location location
+    ) {
+        World world = location.getWorld();
+
+        if (world == null) {
+            throw new IllegalArgumentException(
+                    "No se puede crear el modelo sin mundo."
+            );
+        }
+
+        ItemDisplay display = world.spawn(
+                location,
+                ItemDisplay.class
+        );
+
+        /*
+         * DIAMOND_BLOCK es el material base que ha
+         * funcionado correctamente durante las pruebas.
+         *
+         * El aspecto final lo determina item_model:
+         *
+         * customvehicles:<id>
+         */
+        ItemStack itemStack =
+                new ItemStack(
+                        Material.DIAMOND_BLOCK
+                );
+
+        ItemMeta itemMeta =
+                itemStack.getItemMeta();
+
+        if (itemMeta == null) {
+
+            display.remove();
+
+            throw new IllegalStateException(
+                    "No se pudo obtener ItemMeta "
+                            + "para DIAMOND_BLOCK."
+            );
+        }
+
+        String modelId =
+                normalizeModelId(
+                        definition.id()
+                );
+
+        NamespacedKey modelKey =
+                new NamespacedKey(
+                        "customvehicles",
+                        modelId
+                );
+
+        itemMeta.setItemModel(
+                modelKey
+        );
+
+        itemStack.setItemMeta(
+                itemMeta
+        );
+
+        display.setItemStack(
+                itemStack
+        );
+
+        /*
+         * NONE evita transformaciones propias de:
+         *
+         * - Marcos.
+         * - Manos.
+         * - Inventario.
+         * - Cabeza.
+         */
+        display.setItemDisplayTransform(
+                ItemDisplay.ItemDisplayTransform.NONE
+        );
+
+        display.setInvulnerable(true);
+        display.setPersistent(true);
+        display.setGravity(false);
+        display.setSilent(true);
+
+        display.setShadowRadius(0.0F);
+        display.setShadowStrength(0.0F);
+
+        /*
+         * Caja usada por el cliente para determinar
+         * si debe renderizar el display.
+         */
+        float displayWidth =
+                (float) Math.max(
+                        4.0,
+                        definition.dimensions().width()
+                );
+
+        float displayHeight =
+                (float) Math.max(
+                        4.0,
+                        definition.dimensions().height()
+                );
+
+        display.setDisplayWidth(
+                displayWidth
+        );
+
+        display.setDisplayHeight(
+                displayHeight
+        );
+
+        display.setViewRange(
+                64.0F
+        );
+
+        /*
+         * Brillo máximo para evitar que la carrocería
+         * quede excesivamente oscura.
+         */
+        display.setBrightness(
+                new Display.Brightness(
+                        15,
+                        15
+                )
+        );
+
+        /*
+         * Interpolación visual.
+         */
+        display.setInterpolationDelay(0);
+        display.setInterpolationDuration(1);
+        display.setTeleportDuration(1);
+
+        applyModelTransformation(
+                display
+        );
+
+        if (CustomVehicles.getInstance()
+                .getConfig()
+                .getBoolean("debug", false)) {
+
+            CustomVehicles.getInstance()
+                    .getLogger()
+                    .info(
+                            "ItemDisplay creado"
+                                    + " | entidad="
+                                    + display.getUniqueId()
+                                    + " | material="
+                                    + itemStack.getType()
+                                    + " | modelo="
+                                    + modelKey
+                                    + " | escala="
+                                    + definition.model()
+                                    .scale()
+                    );
+        }
+
+        return display;
+    }
+
+    private void applyModelTransformation(
+            ItemDisplay display
+    ) {
+        float scale =
+                definition.model().scale();
+
+        if (!Float.isFinite(scale)
+                || scale <= 0.0F) {
+
+            throw new IllegalArgumentException(
+                    "La escala del vehículo "
+                            + definition.id()
+                            + " debe ser mayor que cero."
+            );
+        }
+
+        Vector modelOffset =
+                definition.model().offset();
+
+        float pitchRadians =
+                (float) Math.toRadians(
+                        definition.model()
+                                .pitchOffset()
+                );
+
+        float rollRadians =
+                (float) Math.toRadians(
+                        definition.model()
+                                .rollOffset()
+                );
+
+        Transformation transformation =
+                new Transformation(
+                        /*
+                         * Desplazamiento local del modelo.
+                         */
+                        new Vector3f(
+                                (float) modelOffset.getX(),
+                                (float) modelOffset.getY(),
+                                (float) modelOffset.getZ()
+                        ),
+
+                        /*
+                         * Rotación sobre X.
+                         */
+                        new AxisAngle4f(
+                                pitchRadians,
+                                1.0F,
+                                0.0F,
+                                0.0F
+                        ),
+
+                        /*
+                         * Escala uniforme.
+                         */
+                        new Vector3f(
+                                scale,
+                                scale,
+                                scale
+                        ),
+
+                        /*
+                         * Rotación sobre Z.
+                         */
+                        new AxisAngle4f(
+                                rollRadians,
+                                0.0F,
+                                0.0F,
+                                1.0F
+                        )
+                );
+
+        display.setTransformation(
+                transformation
+        );
     }
 
     public void update() {
 
-        if (!body.isValid() || body.isDead()) {
+        if (!body.isValid()
+                || body.isDead()) {
+
             return;
         }
 
+        /*
+         * Si no hay conductor, dejamos de aceptar
+         * entradas de movimiento.
+         */
         if (!hasDriver()) {
             resetInput();
         }
 
         /*
-         * Aceleración.
+         * Aceleración hacia delante.
          */
         if (forward && !backward) {
-            speed += ACCELERATION;
-        } else if (backward && !forward) {
-            speed -= ACCELERATION;
+            speed += acceleration;
+        }
+
+        /*
+         * Aceleración hacia atrás.
+         */
+        if (backward && !forward) {
+            speed -= reverseAcceleration;
         }
 
         /*
          * Rozamiento.
          */
-        speed *= FRICTION;
+        speed *= friction;
 
         /*
          * Límites de velocidad.
+         *
+         * maximumReverseSpeed se almacena como valor
+         * positivo, pero se usa como valor negativo
+         * durante la marcha atrás.
          */
         speed = Math.max(
-                MAX_BACKWARD_SPEED,
-                Math.min(speed, MAX_FORWARD_SPEED)
+                -maximumReverseSpeed,
+                Math.min(
+                        speed,
+                        maximumForwardSpeed
+                )
         );
 
         if (Math.abs(speed) < 0.001) {
@@ -184,155 +561,169 @@ public class Car {
         }
 
         /*
-         * Giramos solamente cuando el coche tiene
-         * una velocidad mínima.
-         *
-         * Usamos nuestro propio yaw, no el yaw del Slime.
+         * Giro.
          */
-        if (Math.abs(speed) > MIN_TURN_SPEED) {
+        if (Math.abs(speed)
+                > minimumTurnSpeed) {
 
-            int effectiveSteering = steering;
+            int effectiveSteering =
+                    steering;
 
             /*
-             * Invertimos el volante al ir marcha atrás.
+             * Al ir marcha atrás se invierte
+             * el sentido del volante.
              */
             if (speed < 0) {
                 effectiveSteering *= -1;
             }
 
-            yaw += effectiveSteering * TURN_SPEED;
+            yaw +=
+                    effectiveSteering
+                            * handling;
 
-            /*
-             * Evita que yaw crezca indefinidamente.
-             */
-            if (yaw > 180.0F) {
-                yaw -= 360.0F;
-            } else if (yaw < -180.0F) {
-                yaw += 360.0F;
-            }
+            yaw = normalizeYaw(yaw);
         }
 
         /*
-         * Calculamos el movimiento usando el yaw guardado.
-         * La dirección no depende de hacia dónde mire el jugador.
+         * Movimiento horizontal según el yaw
+         * almacenado por el coche.
          */
-        double radians = Math.toRadians(yaw);
+        double radians =
+                Math.toRadians(yaw);
 
-        Vector movement = new Vector(
-                -Math.sin(radians),
-                0,
-                Math.cos(radians)
-        ).multiply(speed);
-
-        /*
-         * Conservamos la velocidad vertical porque la gravedad
-         * está activada.
-         */
-        movement.setY(body.getVelocity().getY());
+        Vector movement =
+                new Vector(
+                        -Math.sin(radians),
+                        0,
+                        Math.cos(radians)
+                ).multiply(speed);
 
         /*
-         * Primero aplicamos movimiento.
+         * Conservamos la velocidad vertical aplicada
+         * por la gravedad.
          */
-        body.setVelocity(movement);
+        movement.setY(
+                body.getVelocity().getY()
+        );
 
-        /*
-         * La rotación visual se aplica después.
-         */
-        body.setRotation(yaw, 0);
+        body.setVelocity(
+                movement
+        );
 
-        /*
-         * Los asientos usan exactamente el mismo yaw.
-         */
-        updatePassengerSeats(movement, yaw);
+        body.setRotation(
+                yaw,
+                0
+        );
+
+        updatePassengerSeats(
+                movement,
+                yaw
+        );
+
+        updateModelDisplay();
     }
 
     private void updatePassengerSeats(
             Vector carVelocity,
-            float yaw
+            float currentYaw
     ) {
-        Location bodyLocation = body.getLocation();
+        Location bodyLocation =
+                body.getLocation();
 
         /*
-         * Predecimos dónde estará el coche en el siguiente tick.
+         * Predicción horizontal para la posición
+         * del próximo tick.
          */
-        Vector horizontalCarVelocity = new Vector(
-                carVelocity.getX(),
-                0,
-                carVelocity.getZ()
-        );
+        Vector horizontalCarVelocity =
+                new Vector(
+                        carVelocity.getX(),
+                        0,
+                        carVelocity.getZ()
+                );
 
-        Location nextBodyLocation = bodyLocation
-                .clone()
-                .add(horizontalCarVelocity);
+        Location nextBodyLocation =
+                bodyLocation.clone()
+                        .add(
+                                horizontalCarVelocity
+                        );
 
-        for (int i = 0; i < passengerSeats.size(); i++) {
+        for (int index = 0;
+             index < passengerSeats.size();
+             index++) {
 
-            Slime seat = passengerSeats.get(i);
+            Slime seat =
+                    passengerSeats.get(index);
 
-            if (!seat.isValid() || seat.isDead()) {
+            if (!seat.isValid()
+                    || seat.isDead()) {
+
                 continue;
             }
 
-            /*
-             * Posición local del asiento dentro del coche.
-             */
+            SeatDefinition seatDefinition =
+                    passengerSeatDefinitions.get(
+                            index
+                    );
+
             Vector localOffset =
-                    getPassengerOffset(i);
+                    seatDefinition
+                            .offset()
+                            .clone();
+
+            Vector rotatedOffset =
+                    rotateOffset(
+                            localOffset,
+                            currentYaw
+                    );
+
+            Location targetLocation =
+                    nextBodyLocation.clone()
+                            .add(
+                                    rotatedOffset
+                            );
+
+            Vector requiredVelocity =
+                    targetLocation
+                            .toVector()
+                            .subtract(
+                                    seat.getLocation()
+                                            .toVector()
+                            );
 
             /*
-             * Convertimos el offset local en uno orientado
-             * según la dirección actual del coche.
-             */
-            Vector rotatedOffset = rotateOffset(
-                    localOffset,
-                    yaw
-            );
-
-            /*
-             * Posición exacta donde debe estar el asiento
-             * en el siguiente tick.
-             */
-            Location targetLocation = nextBodyLocation
-                    .clone()
-                    .add(rotatedOffset);
-
-            Location currentLocation =
-                    seat.getLocation();
-
-            /*
-             * La velocidad necesaria para llegar exactamente
-             * a la posición objetivo en el siguiente tick.
-             */
-            Vector requiredVelocity = targetLocation
-                    .toVector()
-                    .subtract(currentLocation.toVector());
-
-            /*
-             * Conservamos la velocidad vertical del Slime
-             * para que la gravedad siga funcionando.
+             * Conservamos la velocidad vertical
+             * propia del asiento.
              */
             requiredVelocity.setY(
                     seat.getVelocity().getY()
             );
 
             /*
-             * Protección por si un asiento queda muy lejos,
-             * por ejemplo tras cargar un chunk.
+             * Evita correcciones horizontales extremas.
              */
-            double maximumHorizontalVelocity = 2.0;
+            double maximumHorizontalVelocity =
+                    2.0;
 
-            Vector horizontalVelocity = new Vector(
-                    requiredVelocity.getX(),
-                    0,
-                    requiredVelocity.getZ()
-            );
+            Vector horizontalVelocity =
+                    new Vector(
+                            requiredVelocity.getX(),
+                            0,
+                            requiredVelocity.getZ()
+                    );
 
-            if (horizontalVelocity.lengthSquared()
-                    > maximumHorizontalVelocity
-                    * maximumHorizontalVelocity) {
+            double maximumSquared =
+                    maximumHorizontalVelocity
+                            * maximumHorizontalVelocity;
 
-                horizontalVelocity.normalize()
-                        .multiply(maximumHorizontalVelocity);
+            if (horizontalVelocity
+                    .lengthSquared()
+                    > maximumSquared) {
+
+                horizontalVelocity
+                        .normalize()
+                        .multiply(
+                                maximumHorizontalVelocity
+                        );
 
                 requiredVelocity.setX(
                         horizontalVelocity.getX()
@@ -343,71 +734,101 @@ public class Car {
                 );
             }
 
-            seat.setRotation(yaw, 0);
-            seat.setVelocity(requiredVelocity);
+            seat.setRotation(
+                    currentYaw,
+                    0
+            );
+
+            seat.setVelocity(
+                    requiredVelocity
+            );
         }
     }
 
     private void placePassengerSeatsInitially() {
 
-        Location bodyLocation = body.getLocation();
+        Location bodyLocation =
+                body.getLocation();
 
-        for (int i = 0; i < passengerSeats.size(); i++) {
+        bodyLocation.setYaw(yaw);
+        bodyLocation.setPitch(0);
 
-            Slime seat = passengerSeats.get(i);
+        for (int index = 0;
+             index < passengerSeats.size();
+             index++) {
 
-            Vector offset = rotateOffset(
-                    getPassengerOffset(i),
-                    bodyLocation.getYaw()
-            );
+            Slime seat =
+                    passengerSeats.get(index);
 
-            Location seatLocation = bodyLocation
-                    .clone()
-                    .add(offset);
+            SeatDefinition seatDefinition =
+                    passengerSeatDefinitions.get(
+                            index
+                    );
 
-            seatLocation.setYaw(bodyLocation.getYaw());
+            Vector rotatedOffset =
+                    rotateOffset(
+                            seatDefinition
+                                    .offset()
+                                    .clone(),
+                            yaw
+                    );
+
+            Location seatLocation =
+                    bodyLocation.clone()
+                            .add(
+                                    rotatedOffset
+                            );
+
+            seatLocation.setYaw(yaw);
             seatLocation.setPitch(0);
 
-            /*
-             * Aquí sí podemos usar teleport porque los asientos
-             * todavía no tienen jugadores montados.
-             */
-            seat.teleport(seatLocation);
+            seat.teleport(
+                    seatLocation
+            );
         }
     }
 
-    private Vector getPassengerOffset(int index) {
+    private void updateModelDisplay() {
+
+        if (!modelDisplay.isValid()
+                || modelDisplay.isDead()) {
+
+            return;
+        }
+
+        Location modelLocation =
+                body.getLocation()
+                        .clone();
+
         /*
-         * X representa izquierda/derecha.
-         * Z representa delante/detrás.
-         *
-         * Puedes ajustar estos valores más adelante
-         * al tamaño de tu modelo 3D.
+         * El desplazamiento configurado se aplica en la
+         * Transformation del ItemDisplay, no aquí.
          */
-        return switch (index) {
-            case 0 -> new Vector(0.9, 0, 0);
-            case 1 -> new Vector(-0.9, 0, -1.2);
-            case 2 -> new Vector(0.9, 0, -1.2);
-            case 3 -> new Vector(-0.9, 0, -2.4);
-            case 4 -> new Vector(0.9, 0, -2.4);
-            case 5 -> new Vector(-0.9, 0, -3.6);
-            case 6 -> new Vector(0.9, 0, -3.6);
-            default -> new Vector(
-                    0,
-                    0,
-                    -1.2 * index
-            );
-        };
+        modelLocation.setYaw(
+                yaw
+                        + definition.model()
+                        .yawOffset()
+        );
+
+        modelLocation.setPitch(0);
+
+        modelDisplay.teleport(
+                modelLocation
+        );
     }
 
     private Vector rotateOffset(
             Vector offset,
-            float yaw
+            float currentYaw
     ) {
-        double radians = Math.toRadians(yaw);
+        double radians =
+                Math.toRadians(currentYaw);
 
-        double cos = Math.cos(radians);
-        double sin = Math.sin(radians);
+        double cos =
+                Math.cos(radians);
+
+        double sin =
+                Math.sin(radians);
 
         double rotatedX =
                 offset.getX() * cos
@@ -424,18 +845,52 @@ public class Car {
         );
     }
 
-    public boolean mountDriver(Player player) {
+    private float normalizeYaw(
+            float value
+    ) {
+        while (value > 180.0F) {
+            value -= 360.0F;
+        }
+
+        while (value < -180.0F) {
+            value += 360.0F;
+        }
+
+        return value;
+    }
+
+    private String normalizeModelId(
+            String value
+    ) {
+        return value
+                .toLowerCase(Locale.ROOT)
+                .replace(' ', '_');
+    }
+
+    public boolean mountDriver(
+            Player player
+    ) {
         if (hasDriver()) {
             return false;
         }
 
-        return body.addPassenger(player);
+        return body.addPassenger(
+                player
+        );
     }
 
-    public boolean mountPassenger(Player player) {
-        for (Slime seat : passengerSeats) {
-            if (seat.getPassengers().isEmpty()) {
-                return seat.addPassenger(player);
+    public boolean mountPassenger(
+            Player player
+    ) {
+        for (Slime seat
+                : passengerSeats) {
+
+            if (seat.getPassengers()
+                    .isEmpty()) {
+
+                return seat.addPassenger(
+                        player
+                );
             }
         }
 
@@ -443,20 +898,31 @@ public class Car {
     }
 
     public boolean hasDriver() {
-        return !body.getPassengers().isEmpty();
+        return !body.getPassengers()
+                .isEmpty();
     }
 
-    public boolean isDriverSeat(Slime seat) {
-        return body.getUniqueId().equals(
-                seat.getUniqueId()
-        );
+    public boolean isDriverSeat(
+            Slime seat
+    ) {
+        return body.getUniqueId()
+                .equals(
+                        seat.getUniqueId()
+                );
     }
 
-    public boolean isPassengerSeat(Slime seat) {
-        for (Slime passengerSeat : passengerSeats) {
-            if (passengerSeat.getUniqueId().equals(
-                    seat.getUniqueId()
-            )) {
+    public boolean isPassengerSeat(
+            Slime seat
+    ) {
+        for (Slime passengerSeat
+                : passengerSeats) {
+
+            if (passengerSeat
+                    .getUniqueId()
+                    .equals(
+                            seat.getUniqueId()
+                    )) {
+
                 return true;
             }
         }
@@ -464,7 +930,9 @@ public class Car {
         return false;
     }
 
-    public boolean containsSeat(Slime seat) {
+    public boolean containsSeat(
+            Slime seat
+    ) {
         return isDriverSeat(seat)
                 || isPassengerSeat(seat);
     }
@@ -475,17 +943,47 @@ public class Car {
         steering = 0;
     }
 
-    public void remove() {
+    public void stop() {
+
         resetInput();
+
+        speed = 0;
+
+        body.setVelocity(
+                new Vector(0, 0, 0)
+        );
+
+        for (Slime seat
+                : passengerSeats) {
+
+            seat.setVelocity(
+                    new Vector(0, 0, 0)
+            );
+        }
+    }
+
+    public void remove() {
+
+        stop();
 
         body.eject();
 
-        for (Slime seat : passengerSeats) {
+        for (Slime seat
+                : passengerSeats) {
+
             seat.eject();
             seat.remove();
         }
 
+        if (modelDisplay.isValid()) {
+            modelDisplay.remove();
+        }
+
         body.remove();
+    }
+
+    public VehicleDefinition getDefinition() {
+        return definition;
     }
 
     public Slime getBody() {
@@ -496,32 +994,52 @@ public class Car {
         return body;
     }
 
+    public ItemDisplay getModelDisplay() {
+        return modelDisplay;
+    }
+
     public List<Slime> getPassengerSeats() {
         return Collections.unmodifiableList(
                 passengerSeats
         );
     }
 
-    public VehicleType getType() {
-        return type;
-    }
-
     public double getSpeed() {
         return speed;
     }
 
-    public void setSteering(int steering) {
-        this.steering = Math.max(
-                -1,
-                Math.min(steering, 1)
-        );
+    public float getYaw() {
+        return yaw;
     }
 
-    public void setForward(boolean forward) {
-        this.forward = forward;
+    public int getSteering() {
+        return steering;
     }
 
-    public void setBackward(boolean backward) {
-        this.backward = backward;
+    public void setSteering(
+            int steering
+    ) {
+        this.steering =
+                Math.max(
+                        -1,
+                        Math.min(
+                                steering,
+                                1
+                        )
+                );
+    }
+
+    public void setForward(
+            boolean forward
+    ) {
+        this.forward =
+                forward;
+    }
+
+    public void setBackward(
+            boolean backward
+    ) {
+        this.backward =
+                backward;
     }
 }

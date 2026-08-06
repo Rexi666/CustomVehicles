@@ -2,12 +2,18 @@ name: CustomVehicles
 version: '${version}'
 
 main: org.rexi.customVehicles.CustomVehicles
-api-version: '1.21'
+api-version: '1.21.4'
 load: POSTWORLD
 
 commands:
   vehicle:
-    description: Vehicle command
+    description: Gestiona los vehículos personalizados
+    usage: /vehicle <spawn|list|reload>
+    aliases:
+      - vehicles
+      - car
 
-depend:
-  - ProtocolLib
+permissions:
+  customvehicles.admin.reload:
+    description: Permite recargar las definiciones de vehículos
+    default: op

@@ -1,0 +1,20 @@
+resource-pack:
+  enabled: true
+
+  # Debe corresponder a la versión de Minecraft utilizada.
+  # Se deja configurable porque cambia entre versiones.
+  pack-format: 0
+
+  output-directory: "generated"
+  output-file: "CustomVehiclesPack.zip"
+
+  rebuild-on-startup: true
+
+vehicles:
+  load-cars: true
+  load-motorcycles: true
+  load-boats: true
+  load-planes: true
+  load-helicopters: true
+
+debug: false

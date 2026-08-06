@@ -1,0 +1,50 @@
+id: "sedan"
+display-name: "Sedán"
+
+enabled: true
+
+physics:
+  max-forward-speed: 0.50
+  max-reverse-speed: 0.20
+  acceleration: 0.03
+  reverse-acceleration: 0.02
+  friction: 0.98
+  handling: 4.0
+  minimum-turn-speed: 0.01
+
+dimensions:
+  width: 1.8
+  height: 1.4
+  length: 3.8
+
+model:
+  file: "model.json"
+  scale: 1.0
+
+  offset:
+    x: 0.0
+    y: -0.25
+    z: 0.0
+
+  rotation:
+    yaw-offset: 0.0
+    pitch-offset: 0.0
+    roll-offset: 0.0
+
+  textures:
+    "0": "texture.png"
+
+seats:
+  driver:
+    role: "driver"
+    offset:
+      x: -0.45
+      y: 0.0
+      z: 0.25
+
+  passengers:
+    - id: "front_passenger"
+      offset:
+        x: -0.9
+        y: 0.0
+        z: 0.25
