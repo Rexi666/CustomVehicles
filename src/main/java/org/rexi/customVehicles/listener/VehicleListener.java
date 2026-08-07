@@ -43,7 +43,7 @@ public class VehicleListener implements Listener {
 
         if (player.isInsideVehicle()) {
             player.sendMessage(
-                    "§cYa estás montado."
+                    "§cYou are already inside the seat!."
             );
             return;
         }
@@ -55,14 +55,14 @@ public class VehicleListener implements Listener {
 
         if (car == null) {
             player.sendMessage(
-                    "§cNo se encontró el vehículo."
+                    "§cNo available vehicle found."
             );
             return;
         }
 
         if (!seat.getPassengers().isEmpty()) {
             player.sendMessage(
-                    "§cEse asiento está ocupado."
+                    "§cThat seat is occupied."
             );
             return;
         }
@@ -72,18 +72,18 @@ public class VehicleListener implements Listener {
 
         if (!mounted) {
             player.sendMessage(
-                    "§cNo has podido subir."
+                    "§cYou could not mount the vehicle."
             );
             return;
         }
 
         if (car.isDriverSeat(seat)) {
             player.sendMessage(
-                    "§aHas subido como conductor."
+                    "§aYou have mounted as the driver."
             );
         } else {
             player.sendMessage(
-                    "§aHas subido como acompañante."
+                    "§aYou have mounted as a passenger."
             );
         }
     }
@@ -115,6 +115,6 @@ public class VehicleListener implements Listener {
             car.resetInput();
         }
 
-        player.sendMessage("§eTe has bajado.");
+        player.sendMessage("§eYou have dismounted.");
     }
 }

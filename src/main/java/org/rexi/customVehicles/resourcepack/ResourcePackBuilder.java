@@ -55,7 +55,7 @@ public class ResourcePackBuilder {
                 true
         )) {
             throw new ResourcePackBuildException(
-                    "La generación del resource pack está desactivada."
+                    "Resourcepack generation is disabled."
             );
         }
 
@@ -66,7 +66,7 @@ public class ResourcePackBuilder {
 
         if (packFormat <= 0) {
             throw new ResourcePackBuildException(
-                    "resource-pack.pack-format debe ser mayor que 0."
+                    "resource-pack.pack-format must be a positive number."
             );
         }
 
@@ -97,7 +97,7 @@ public class ResourcePackBuilder {
                 .endsWith(".zip")) {
 
             throw new ResourcePackBuildException(
-                    "resource-pack.output-file debe terminar en .zip."
+                    "resource-pack.output-file must end with .zip."
             );
         }
 
@@ -148,8 +148,8 @@ public class ResourcePackBuilder {
 
             if (definitions.isEmpty()) {
                 plugin.getLogger().warning(
-                        "Se generará un resource pack vacío "
-                                + "porque no hay vehículos cargados."
+                        "An empty resource pack will be generated "
+                                + "because no vehicles are loaded."
                 );
             }
 
@@ -166,7 +166,7 @@ public class ResourcePackBuilder {
 
                 if (!generatedIds.add(resourceId)) {
                     throw new ResourcePackBuildException(
-                            "ID de modelo duplicado: "
+                            "Duplicate model ID: "
                                     + resourceId
                     );
                 }
@@ -215,7 +215,7 @@ public class ResourcePackBuilder {
             deleteQuietly(temporaryDirectory);
 
             throw new ResourcePackBuildException(
-                    "No se pudo generar el resource pack.",
+                    "Could not generate the resource pack.",
                     exception
             );
         }
@@ -386,7 +386,7 @@ public class ResourcePackBuilder {
 
         if (!Files.isRegularFile(sourceModel)) {
             throw new ResourcePackBuildException(
-                    "No existe el modelo de "
+                    "Model not found for "
                             + definition.id()
                             + ": "
                             + sourceModel
@@ -407,7 +407,7 @@ public class ResourcePackBuilder {
 
         } catch (RuntimeException exception) {
             throw new ResourcePackBuildException(
-                    "JSON inválido en el modelo de "
+                    "Invalid JSON in the model of "
                             + definition.id(),
                     exception
             );
@@ -415,9 +415,9 @@ public class ResourcePackBuilder {
 
         if (!parsed.isJsonObject()) {
             throw new ResourcePackBuildException(
-                    "El modelo de "
+                    "The model of "
                             + definition.id()
-                            + " no contiene un objeto JSON."
+                            + " does not contain a JSON object."
             );
         }
 
@@ -549,7 +549,7 @@ public class ResourcePackBuilder {
 
             if (!Files.isRegularFile(source)) {
                 throw new ResourcePackBuildException(
-                        "No existe la textura: "
+                        "Texture not found: "
                                 + source
                 );
             }
@@ -561,7 +561,7 @@ public class ResourcePackBuilder {
 
             if (!sourceName.endsWith(".png")) {
                 throw new ResourcePackBuildException(
-                        "La textura debe ser un archivo PNG: "
+                        "Texture must be a PNG file: "
                                 + source
                 );
             }
@@ -574,7 +574,7 @@ public class ResourcePackBuilder {
                 );
             } catch (IOException exception) {
                 throw new ResourcePackBuildException(
-                        "No se pudo leer la textura PNG: "
+                        "Could not read the PNG texture: "
                                 + source,
                         exception
                 );
@@ -582,7 +582,7 @@ public class ResourcePackBuilder {
 
             if (image == null) {
                 throw new ResourcePackBuildException(
-                        "El archivo no es un PNG válido: "
+                        "The file is not a valid PNG: "
                                 + source
                 );
             }
@@ -599,7 +599,7 @@ public class ResourcePackBuilder {
             );
 
             plugin.getLogger().info(
-                    "Textura validada para "
+                    "Texture validated for "
                             + definition.id()
                             + ": "
                             + source.getFileName()
@@ -624,7 +624,7 @@ public class ResourcePackBuilder {
 
         if (!file.startsWith(vehicleDirectory)) {
             throw new ResourcePackBuildException(
-                    "El archivo sale de la carpeta del vehículo "
+                    "The file is outside the vehicle folder "
                             + definition.id()
                             + ": "
                             + file
@@ -719,7 +719,7 @@ public class ResourcePackBuilder {
 
         } catch (NoSuchAlgorithmException exception) {
             throw new ResourcePackBuildException(
-                    "SHA-1 no está disponible.",
+                    "SHA-1 is not available.",
                     exception
             );
         }
@@ -775,7 +775,7 @@ public class ResourcePackBuilder {
                 || value.isBlank()) {
 
             throw new ResourcePackBuildException(
-                    "Se encontró un ID vacío."
+                    "An empty ID was found."
             );
         }
 
@@ -787,7 +787,7 @@ public class ResourcePackBuilder {
                 "[a-z0-9._-]+"
         )) {
             throw new ResourcePackBuildException(
-                    "ID no válido para resource pack: "
+                    "Invalid ID for resource pack: "
                             + value
             );
         }
@@ -809,7 +809,7 @@ public class ResourcePackBuilder {
             throw new ResourcePackBuildException(
                     "resource-pack."
                             + configKey
-                            + " no es válido."
+                            + " is not valid."
             );
         }
     }
@@ -822,7 +822,7 @@ public class ResourcePackBuilder {
 
         if (!child.startsWith(parent)) {
             throw new ResourcePackBuildException(
-                    "Ruta no permitida: "
+                    "Path not allowed: "
                             + value
             );
         }
@@ -886,7 +886,7 @@ public class ResourcePackBuilder {
 
         } catch (IOException exception) {
             plugin.getLogger().warning(
-                    "No se pudo eliminar la carpeta temporal "
+                    "Could not delete the temporary folder "
                             + directory
                             + ": "
                             + exception.getMessage()
@@ -905,9 +905,9 @@ public class ResourcePackBuilder {
 
         if (!model.get("elements").isJsonArray()) {
             throw new ResourcePackBuildException(
-                    "El campo 'elements' del modelo "
+                    "The 'elements' field of the model "
                             + definition.id()
-                            + " no es una lista."
+                            + " is not a list."
             );
         }
 
@@ -926,11 +926,11 @@ public class ResourcePackBuilder {
 
             if (!elementValue.isJsonObject()) {
                 throw new ResourcePackBuildException(
-                        "El elemento "
+                        "The element "
                                 + index
-                                + " del modelo "
+                                + " of the model "
                                 + definition.id()
-                                + " no es un objeto JSON."
+                                + " is not a JSON object."
                 );
             }
 
@@ -946,11 +946,11 @@ public class ResourcePackBuilder {
 
             if (!rotationValue.isJsonObject()) {
                 throw new ResourcePackBuildException(
-                        "La rotación del elemento "
+                        "The rotation of the element "
                                 + index
-                                + " del modelo "
+                                + " of the model "
                                 + definition.id()
-                                + " no es un objeto JSON."
+                                + " is not a JSON object."
                 );
             }
 
@@ -963,10 +963,9 @@ public class ResourcePackBuilder {
                     .isNumber()) {
 
                 throw new ResourcePackBuildException(
-                        "Falta un angle válido en la rotación "
-                                + "del elemento "
+                        "The 'angle' field is missing or invalid in the rotation of element "
                                 + index
-                                + " del modelo "
+                                + " of the model "
                                 + definition.id()
                 );
             }
@@ -994,12 +993,11 @@ public class ResourcePackBuilder {
                     .isString()) {
 
                 throw new ResourcePackBuildException(
-                        "Falta un axis válido en la rotación "
-                                + "del elemento "
+                        "The 'axis' field is missing or invalid in the rotation of element "
                                 + index
-                                + " del modelo "
+                                + " of the model "
                                 + definition.id()
-                                + ". Ángulo: "
+                                + ". Angle: "
                                 + angle
                 );
             }
@@ -1014,9 +1012,9 @@ public class ResourcePackBuilder {
                     && !axis.equals("z")) {
 
                 throw new ResourcePackBuildException(
-                        "Axis no válido en el elemento "
+                        "The 'axis' field is missing or invalid in the rotation of element "
                                 + index
-                                + " del modelo "
+                                + " of the model "
                                 + definition.id()
                                 + ": "
                                 + axis
@@ -1029,10 +1027,9 @@ public class ResourcePackBuilder {
                     .size() != 3) {
 
                 throw new ResourcePackBuildException(
-                        "Falta un origin válido en la rotación "
-                                + "del elemento "
+                        "The 'origin' field is missing or invalid in the rotation of element "
                                 + index
-                                + " del modelo "
+                                + " of the model "
                                 + definition.id()
                 );
             }
@@ -1075,26 +1072,26 @@ public class ResourcePackBuilder {
             }
 
             throw new ResourcePackBuildException(
-                    "Rotación no compatible en el elemento "
+                    "The 'angle' field is missing or invalid in the rotation of element "
                             + index
-                            + " del modelo "
+                            + " of the model "
                             + definition.id()
                             + ": "
                             + angle
-                            + " grados. Minecraft sólo admite "
-                            + "rotaciones de elementos entre "
-                            + "-45 y 45 grados."
+                            + " degrees. Minecraft only supports "
+                            + "rotations of elements between "
+                            + "-45 and 45 degrees."
             );
         }
 
         plugin.getLogger().info(
-                "Rotaciones procesadas para "
+                "Rotations processed for "
                         + definition.id()
                         + ": "
                         + removedZeroRotations
-                        + " rotaciones de 0° eliminadas, "
+                        + " rotations of 0° removed, "
                         + bakedRightAngleRotations
-                        + " rotaciones rectas horneadas."
+                        + " right-angle rotations baked."
         );
     }
 
@@ -1285,7 +1282,7 @@ public class ResourcePackBuilder {
             }
 
             default -> throw new IllegalArgumentException(
-                    "Eje de rotación no válido: "
+                    "Invalid rotation axis: "
                             + axis
             );
         }
@@ -1314,13 +1311,13 @@ public class ResourcePackBuilder {
                 .size() != 3) {
 
             throw new ResourcePackBuildException(
-                    "El campo "
+                    "The field "
                             + field
-                            + " del elemento "
+                            + " of element "
                             + elementIndex
-                            + " del modelo "
+                            + " of the model "
                             + definition.id()
-                            + " no es un vector válido."
+                            + " is not a valid vector."
             );
         }
 
@@ -1337,13 +1334,13 @@ public class ResourcePackBuilder {
         } catch (RuntimeException exception) {
 
             throw new ResourcePackBuildException(
-                    "El campo "
+                    "The field "
                             + field
-                            + " del elemento "
+                            + " of element "
                             + elementIndex
-                            + " del modelo "
+                            + " of the model "
                             + definition.id()
-                            + " contiene valores no numéricos.",
+                            + " contains non-numeric values.",
                     exception
             );
         }
@@ -1389,7 +1386,7 @@ public class ResourcePackBuilder {
 
             if (archive.getEntry("pack.mcmeta") == null) {
                 throw new ResourcePackBuildException(
-                        "El ZIP generado no contiene pack.mcmeta."
+                        "The generated ZIP does not contain pack.mcmeta."
                 );
             }
 
@@ -1417,14 +1414,14 @@ public class ResourcePackBuilder {
 
                 if (archive.getEntry(itemPath) == null) {
                     throw new ResourcePackBuildException(
-                            "Falta en el ZIP: "
+                            "The generated ZIP does not contain: "
                                     + itemPath
                     );
                 }
 
                 if (archive.getEntry(modelPath) == null) {
                     throw new ResourcePackBuildException(
-                            "Falta en el ZIP: "
+                            "The generated ZIP does not contain: "
                                     + modelPath
                     );
                 }
@@ -1448,13 +1445,13 @@ public class ResourcePackBuilder {
 
                     if (archive.getEntry(texturePath) == null) {
                         throw new ResourcePackBuildException(
-                                "Falta en el ZIP: "
+                                "The generated ZIP does not contain: "
                                         + texturePath
                         );
                     }
 
                     plugin.getLogger().info(
-                            "Verificado en el ZIP: "
+                            "Verified in the ZIP: "
                                     + texturePath
                     );
                 }

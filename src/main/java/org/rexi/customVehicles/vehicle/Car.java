@@ -104,7 +104,7 @@ public class Car {
     ) {
         if (definition == null) {
             throw new IllegalArgumentException(
-                    "La definición del vehículo no puede ser null."
+                    "The definition of the vehicle cannot be null."
             );
         }
 
@@ -113,7 +113,7 @@ public class Car {
 
         if (world == null) {
             throw new IllegalArgumentException(
-                    "La ubicación del vehículo no tiene mundo."
+                    "Vehicle location cannot be null."
             );
         }
 
@@ -206,7 +206,7 @@ public class Car {
 
         if (world == null) {
             throw new IllegalArgumentException(
-                    "No se puede crear un asiento sin mundo."
+                    "The world of the vehicle location cannot be null."
             );
         }
 
@@ -300,7 +300,7 @@ public class Car {
 
         if (world == null) {
             throw new IllegalArgumentException(
-                    "No se puede crear el modelo sin mundo."
+                    "The world of the vehicle location cannot be null."
             );
         }
 
@@ -326,8 +326,7 @@ public class Car {
             display.remove();
 
             throw new IllegalStateException(
-                    "No se pudo obtener ItemMeta "
-                            + "para DIAMOND_BLOCK."
+                    "The ItemMeta for DIAMOND_BLOCK could not be obtained."
             );
         }
 
@@ -426,14 +425,14 @@ public class Car {
             CustomVehicles.getInstance()
                     .getLogger()
                     .info(
-                            "ItemDisplay creado"
-                                    + " | entidad="
+                            "ItemDisplay created"
+                                    + " | entity="
                                     + display.getUniqueId()
                                     + " | material="
                                     + itemStack.getType()
-                                    + " | modelo="
+                                    + " | model="
                                     + modelKey
-                                    + " | escala="
+                                    + " | scale="
                                     + definition.model().scale()
                     );
         }
@@ -451,9 +450,9 @@ public class Car {
                 || scale <= 0.0F) {
 
             throw new IllegalArgumentException(
-                    "La escala del vehículo "
+                    "The scale of the vehicle "
                             + definition.id()
-                            + " debe ser mayor que cero."
+                            + " must be positive."
             );
         }
 

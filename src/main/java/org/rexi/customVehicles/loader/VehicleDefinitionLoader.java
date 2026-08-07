@@ -35,7 +35,7 @@ public class VehicleDefinitionLoader {
         }
 
         plugin.getLogger().info(
-                "Vehículos cargados: "
+                "Loaded vehicles: "
                         + definitions.size()
         );
     }
@@ -50,7 +50,7 @@ public class VehicleDefinitionLoader {
                 && !categoryFolder.mkdirs()) {
 
             plugin.getLogger().warning(
-                    "No se pudo crear "
+                    "Could not create "
                             + categoryFolder.getPath()
             );
 
@@ -77,7 +77,7 @@ public class VehicleDefinitionLoader {
 
                 if (definitions.containsKey(normalizedId)) {
                     plugin.getLogger().warning(
-                            "ID duplicado: "
+                            "Duplicate ID: "
                                     + definition.id()
                     );
 
@@ -90,7 +90,7 @@ public class VehicleDefinitionLoader {
                 );
 
                 plugin.getLogger().info(
-                        "Cargado: "
+                        "Loaded: "
                                 + category.name()
                                 + "/"
                                 + definition.id()
@@ -98,7 +98,7 @@ public class VehicleDefinitionLoader {
 
             } catch (VehicleLoadException exception) {
                 plugin.getLogger().warning(
-                        "No se pudo cargar "
+                        "Could not load "
                                 + vehicleFolder.getPath()
                                 + ": "
                                 + exception.getMessage()
@@ -117,7 +117,7 @@ public class VehicleDefinitionLoader {
 
         if (!configFile.isFile()) {
             throw new VehicleLoadException(
-                    "Falta config.yml"
+                    "Missing config.yml"
             );
         }
 
@@ -128,7 +128,7 @@ public class VehicleDefinitionLoader {
 
         if (!config.getBoolean("enabled", true)) {
             throw new VehicleLoadException(
-                    "El vehículo está desactivado"
+                    "The vehicle is disabled"
             );
         }
 
@@ -206,8 +206,8 @@ public class VehicleDefinitionLoader {
 
         if (friction <= 0 || friction > 1) {
             throw new VehicleLoadException(
-                    "physics.friction debe estar "
-                            + "entre 0 y 1"
+                    "physics.friction must be "
+                            + "between 0 and 1"
             );
         }
 
@@ -257,7 +257,7 @@ public class VehicleDefinitionLoader {
 
         if (!modelFile.toFile().isFile()) {
             throw new VehicleLoadException(
-                    "No existe el modelo: "
+                    "Model not found: "
                             + fileName
             );
         }
@@ -332,8 +332,8 @@ public class VehicleDefinitionLoader {
 
             if (!(idValue instanceof String id)) {
                 throw new VehicleLoadException(
-                        "Asiento " + index
-                                + " sin id válido"
+                        "Seat " + index
+                                + " has an invalid ID"
                 );
             }
 
@@ -341,8 +341,8 @@ public class VehicleDefinitionLoader {
                     offsetMap)) {
 
                 throw new VehicleLoadException(
-                        "Asiento " + id
-                                + " sin offset válido"
+                        "Seat " + id
+                                + " has an invalid offset"
                 );
             }
 
@@ -375,7 +375,7 @@ public class VehicleDefinitionLoader {
 
         if (section == null) {
             throw new VehicleLoadException(
-                    "Falta model.textures"
+                    "Missing model.textures"
             );
         }
 
@@ -390,7 +390,7 @@ public class VehicleDefinitionLoader {
                     || relativePath.isBlank()) {
 
                 throw new VehicleLoadException(
-                        "Textura vacía: " + key
+                        "Empty texture: " + key
                 );
             }
 
@@ -399,7 +399,7 @@ public class VehicleDefinitionLoader {
 
             if (!textureFile.toFile().isFile()) {
                 throw new VehicleLoadException(
-                        "No existe la textura "
+                        "Texture not found: "
                                 + relativePath
                 );
             }
@@ -420,7 +420,7 @@ public class VehicleDefinitionLoader {
 
         if (section == null) {
             throw new VehicleLoadException(
-                    "Falta " + path
+                    "Missing " + path
             );
         }
 
@@ -450,7 +450,7 @@ public class VehicleDefinitionLoader {
 
         if (!(value instanceof Number number)) {
             throw new VehicleLoadException(
-                    path + " debe ser un número"
+                    path + " must be a number"
             );
         }
 
@@ -466,7 +466,7 @@ public class VehicleDefinitionLoader {
 
         if (value == null || value.isBlank()) {
             throw new VehicleLoadException(
-                    "Falta " + path
+                    "Missing " + path
             );
         }
 
@@ -485,7 +485,7 @@ public class VehicleDefinitionLoader {
 
         if (!Double.isFinite(value) || value <= 0) {
             throw new VehicleLoadException(
-                    path + " debe ser mayor que 0"
+                    path + " must be a positive number"
             );
         }
 
@@ -505,7 +505,7 @@ public class VehicleDefinitionLoader {
         if (!Double.isFinite(value) || value < 0) {
             throw new VehicleLoadException(
                     path
-                            + " no puede ser negativo"
+                            + " must be a non-negative number"
             );
         }
 

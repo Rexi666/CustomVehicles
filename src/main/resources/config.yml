@@ -3,7 +3,7 @@ resource-pack:
 
   # Debe corresponder a la versión de Minecraft utilizada.
   # Se deja configurable porque cambia entre versiones.
-  pack-format: 0
+  pack-format: 64
 
   output-directory: "generated"
   output-file: "CustomVehiclesPack.zip"

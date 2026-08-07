@@ -14,24 +14,14 @@ public class VehicleCommand implements CommandExecutor {
 
     private final CustomVehicles plugin;
 
-    public VehicleCommand(
-            CustomVehicles plugin
-    ) {
+    public VehicleCommand(CustomVehicles plugin) {
         this.plugin = plugin;
     }
 
     @Override
-    public boolean onCommand(
-            CommandSender sender,
-            Command command,
-            String label,
-            String[] args
-    ) {
+    public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         if (!(sender instanceof Player player)) {
-
-            sender.sendMessage(
-                    "Este comando sólo puede usarlo un jugador."
-            );
+            sender.sendMessage("This command can only be used by players.");
 
             return true;
         }
@@ -67,7 +57,7 @@ public class VehicleCommand implements CommandExecutor {
         if (args.length != 2) {
 
             player.sendMessage(
-                    "§eUso: /vehicle spawn <id>"
+                    "§eUsage: /vehicle spawn <id>"
             );
 
             return true;
@@ -83,14 +73,14 @@ public class VehicleCommand implements CommandExecutor {
         if (definition == null) {
 
             player.sendMessage(
-                    "§cNo existe el vehículo '"
+                    "§cVehicle doesnt exist '"
                             + args[1]
                             + "'."
             );
 
             player.sendMessage(
-                    "§7Usa §f/vehicle list §7para ver "
-                            + "los vehículos disponibles."
+                    "§7Use §f/vehicle list §7to see "
+                            + "available vehicles."
             );
 
             return true;
@@ -107,7 +97,7 @@ public class VehicleCommand implements CommandExecutor {
         } catch (Exception exception) {
 
             plugin.getLogger().severe(
-                    "No se pudo generar el vehículo "
+                    "Vehicle couldnt be generated: "
                             + definition.id()
                             + ": "
                             + exception.getMessage()
@@ -116,8 +106,8 @@ public class VehicleCommand implements CommandExecutor {
             exception.printStackTrace();
 
             player.sendMessage(
-                    "§cNo se pudo generar el vehículo. "
-                            + "Consulta la consola."
+                    "§cVehicle couldnt be generated. "
+                            + "Check the console."
             );
 
             return true;
@@ -127,14 +117,14 @@ public class VehicleCommand implements CommandExecutor {
                 .addVehicle(car);
 
         player.sendMessage(
-                "§aVehículo generado: §f"
+                "§aVehicle generated: §f"
                         + definition.displayName()
         );
 
         player.sendMessage(
                 "§7ID: "
                         + definition.id()
-                        + " | Plazas: "
+                        + " | Seats: "
                         + definition.getTotalSeats()
         );
 
@@ -149,8 +139,8 @@ public class VehicleCommand implements CommandExecutor {
         )) {
 
             player.sendMessage(
-                    "§cNo tienes permiso para recargar "
-                            + "los vehículos."
+                    "§cYou dont have permission to reload "
+                            + "the vehicles."
             );
 
             return true;
@@ -165,25 +155,25 @@ public class VehicleCommand implements CommandExecutor {
                 plugin.rebuildResourcePack();
 
         player.sendMessage(
-                "§aDefiniciones de vehículos recargadas."
+                "§aVehicle definitions reloaded."
         );
 
         if (resourcePackGenerated) {
 
             player.sendMessage(
-                    "§aResource pack regenerado correctamente."
+                    "§aResource pack regenerated successfully."
             );
 
         } else {
 
             player.sendMessage(
-                    "§cNo se pudo regenerar el resource pack. "
-                            + "Consulta la consola."
+                    "§cCouldnt regenerate the resource pack. "
+                            + "Check the console."
             );
         }
 
         player.sendMessage(
-                "§7Vehículos disponibles: "
+                "§7Available vehicles: "
                         + plugin.getDefinitionLoader()
                         .getDefinitions()
                         .size()
@@ -202,14 +192,14 @@ public class VehicleCommand implements CommandExecutor {
         if (definitions.isEmpty()) {
 
             player.sendMessage(
-                    "§eNo hay vehículos cargados."
+                    "§eNo available vehicles loaded."
             );
 
             return true;
         }
 
         player.sendMessage(
-                "§6Vehículos disponibles:"
+                "§6Available vehicles:"
         );
 
         definitions.values()
@@ -229,7 +219,7 @@ public class VehicleCommand implements CommandExecutor {
                                         + definition.displayName()
                                         + ", "
                                         + definition.getTotalSeats()
-                                        + " plazas)"
+                                        + " seats)"
                         )
                 );
 
@@ -239,17 +229,17 @@ public class VehicleCommand implements CommandExecutor {
     private void sendUsage(Player player) {
 
         player.sendMessage(
-                "§6Comandos de CustomVehicles:"
+                "§6CustomVehicles commands:"
         );
 
         player.sendMessage(
                 "§e/vehicle spawn <id>"
-                        + " §7- Genera un vehículo"
+                        + " §7- Generates a vehicle"
         );
 
         player.sendMessage(
                 "§e/vehicle list"
-                        + " §7- Lista los vehículos disponibles"
+                        + " §7- Lists available vehicles"
         );
 
         if (player.hasPermission(
@@ -257,7 +247,7 @@ public class VehicleCommand implements CommandExecutor {
         )) {
             player.sendMessage(
                     "§e/vehicle reload"
-                            + " §7- Recarga las definiciones"
+                            + " §7- Reloads vehicle definitions"
             );
         }
     }

@@ -96,7 +96,7 @@ public class VehicleInputListener {
             CustomVehicles.getInstance()
                     .getLogger()
                     .warning(
-                            "No se pudo leer el input de "
+                            "Input couldnt be read from "
                                     + player.getName()
                                     + ": "
                                     + exception.getMessage()

@@ -29,7 +29,7 @@ public final class CustomVehicles extends JavaPlugin {
                 && !getDataFolder().mkdirs()) {
 
             getLogger().severe(
-                    "No se pudo crear la carpeta "
+                    "Could not create data folder: "
                             + getDataFolder().getPath()
             );
 
@@ -125,8 +125,8 @@ public final class CustomVehicles extends JavaPlugin {
         if (resourcePackBuilder == null) {
 
             getLogger().warning(
-                    "ResourcePackBuilder todavía "
-                            + "no está inicializado."
+                    "ResourcePackBuilder is "
+                            + "not initialized."
             );
 
             return false;
@@ -138,11 +138,11 @@ public final class CustomVehicles extends JavaPlugin {
                     resourcePackBuilder.build();
 
             getLogger().info(
-                    "Resource pack generado correctamente."
+                    "Resource pack generated successfully."
             );
 
             getLogger().info(
-                    "Archivo: "
+                    "Archive: "
                             + result.zipFile()
             );
 
@@ -152,7 +152,7 @@ public final class CustomVehicles extends JavaPlugin {
             );
 
             getLogger().info(
-                    "Modelos incluidos: "
+                    "Models included: "
                             + result.vehicleCount()
             );
 
@@ -161,7 +161,7 @@ public final class CustomVehicles extends JavaPlugin {
         } catch (ResourcePackBuildException exception) {
 
             getLogger().severe(
-                    "No se pudo generar el resource pack: "
+                    "Could not build resource pack: "
                             + exception.getMessage()
             );
 
