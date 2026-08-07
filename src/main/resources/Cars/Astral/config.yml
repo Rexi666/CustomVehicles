@@ -1,5 +1,5 @@
-id: "sedan"
-display-name: "Sedán"
+id: "astral"
+display-name: "Astral"
 
 enabled: true
 
@@ -19,7 +19,7 @@ dimensions:
 
 model:
   file: "model.json"
-  scale: 1.0
+  scale: 5.0
 
   offset:
     x: 0.0
@@ -27,7 +27,7 @@ model:
     z: 0.0
 
   rotation:
-    yaw-offset: 0.0
+    yaw-offset: 180.0
     pitch-offset: 0.0
     roll-offset: 0.0
 
@@ -38,7 +38,7 @@ seats:
   driver:
     role: "driver"
     offset:
-      x: -0.45
+      x: -0.5
       y: 0.0
       z: 0.25
 

@@ -43,22 +43,22 @@ public final class CustomVehicles extends JavaPlugin {
 
         File sedanDirectory = new File(
                 getDataFolder(),
-                "Cars/Sedan"
+                "Cars/Astral"
         );
 
         if (!sedanDirectory.exists()) {
             saveResource(
-                    "Cars/Sedan/config.yml",
+                    "Cars/Astral/config.yml",
                     false
             );
 
             saveResource(
-                    "Cars/Sedan/model.json",
+                    "Cars/Astral/model.json",
                     false
             );
 
             saveResource(
-                    "Cars/Sedan/texture.png",
+                    "Cars/Astral/texture.png",
                     false
             );
         }
